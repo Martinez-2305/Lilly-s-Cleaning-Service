@@ -597,6 +597,51 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── MOBILE NAV ──────────────────────────────────────────────── */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; padding: 8px; cursor: pointer;
+      z-index: 201; flex-shrink: 0;
+    }
+    .nav-hamburger span {
+      display: block; width: 24px; height: 2px;
+      background: var(--white); border-radius: 2px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .nav-mobile {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(7,21,32,0.97); backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    .nav-mobile.open { opacity: 1; pointer-events: all; }
+    .nav-mobile ul {
+      list-style: none; text-align: center;
+      display: flex; flex-direction: column; gap: 2.8rem;
+    }
+    .nav-mobile ul a {
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      font-size: 2.2rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--white-dim); text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .nav-mobile ul a:hover, .nav-mobile ul a:active { color: var(--accent); }
+
+    /* ── TOUCH DEVICES: DISABLE CUSTOM CURSOR ────────────────────── */
+    @media (hover: none), (pointer: coarse) {
+      body { cursor: auto !important; }
+      .cursor, .cursor-ring { display: none !important; }
+      a, button, input, select, textarea,
+      .btn-primary, .btn-ghost, .pricing-cta,
+      .form-submit, .form-group select { cursor: pointer !important; }
+    }
+
     /* ── RESPONSIVE ──────────────────────────────────────────────── */
     @media (max-width: 1024px) {
       .hero-visual { width: 340px; height: 340px; }
@@ -607,20 +652,39 @@
       .about-visual { max-width: 400px; }
       .about-content { padding-left: 0; }
       .services-grid { grid-template-columns: 1fr 1fr; }
-      .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 100%; }
       .form-row { grid-template-columns: 1fr; }
+      .contact-info { padding-right: 0; }
     }
     @media (max-width: 600px) {
+      nav { height: 88px; padding: 0 4vw; }
+      nav .nav-logo img { height: 76px; }
+      nav.scrolled { height: 64px; }
+      nav.scrolled .nav-logo img { height: 54px; }
       .nav-links { display: none; }
-      nav { height: 110px; }
-      nav .nav-logo img { height: 120px; }
-      nav.scrolled { height: 70px; }
-      nav.scrolled .nav-logo img { height: 68px; }
-      .hero-stat-item { padding: 16px 8px; }
-      .hero-stat-num { font-size: 1.4rem; }
+      .nav-hamburger { display: flex; }
+      #hero { padding: 108px 5vw 100px; }
+      .hero-title { font-size: clamp(2.6rem, 9vw, 3.8rem); }
+      .hero-tagline { font-size: 0.9rem; max-width: 90vw; }
+      .hero-actions { flex-direction: column; width: 100%; }
+      .btn-primary, .btn-ghost { width: 100%; justify-content: center; padding: 15px 24px; }
+      .hero-stat-item { padding: 14px 6px; }
+      .hero-stat-num { font-size: 1.3rem; }
+      .hero-stat-label { font-size: 0.54rem; letter-spacing: 0.1em; }
       .services-grid { grid-template-columns: 1fr; }
       .services-header { flex-direction: column; }
       .about-pillars { grid-template-columns: 1fr; }
+      .about-badge { width: 100px; height: 100px; bottom: -14px; right: -6px; }
+      .about-badge-num { font-size: 1.6rem; }
+      .section-inner { padding: 80px 5vw; }
+      footer { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .footer-links { flex-wrap: wrap; gap: 1.2rem; }
+      .pricing-note { font-size: 0.72rem; }
+    }
+    @media (max-width: 380px) {
+      nav .nav-logo img { height: 62px; }
+      .hero-title { font-size: 2.4rem; }
+      .hero-stat-num { font-size: 1.1rem; }
     }
   </style>
 </head>
@@ -628,6 +692,16 @@
 
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
+
+<!-- MOBILE NAV OVERLAY -->
+<div class="nav-mobile" id="navMobile">
+  <ul>
+    <li><a href="#about" onclick="closeMobileNav()">About</a></li>
+    <li><a href="#services" onclick="closeMobileNav()">Services</a></li>
+    <li><a href="#pricing" onclick="closeMobileNav()">Pricing</a></li>
+    <li><a href="#contact" onclick="closeMobileNav()">Get a Quote</a></li>
+  </ul>
+</div>
 
 <!-- NAV -->
 <nav id="navbar">
@@ -640,6 +714,9 @@
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="#contact" class="nav-cta">Get a Quote</a></li>
   </ul>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <!-- HERO -->
@@ -1048,16 +1125,33 @@
 </footer>
 
 <script>
-  // CURSOR
-  const cursor = document.getElementById('cursor');
-  const ring   = document.getElementById('cursorRing');
-  document.addEventListener('mousemove', e => {
-    cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px';
-    ring.style.left=e.clientX+'px';   ring.style.top=e.clientY+'px';
-  });
-  document.querySelectorAll('a,button,input,select,textarea,.pillar,.service-card,.pricing-card').forEach(el => {
-    el.addEventListener('mouseenter',()=>{ cursor.classList.add('hover'); ring.classList.add('hover'); });
-    el.addEventListener('mouseleave',()=>{ cursor.classList.remove('hover'); ring.classList.remove('hover'); });
+  // CURSOR — desktop only
+  const isPointerFine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (isPointerFine) {
+    const cursor = document.getElementById('cursor');
+    const ring   = document.getElementById('cursorRing');
+    document.addEventListener('mousemove', e => {
+      cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px';
+      ring.style.left=e.clientX+'px';   ring.style.top=e.clientY+'px';
+    });
+    document.querySelectorAll('a,button,input,select,textarea,.pillar,.service-card,.pricing-card').forEach(el => {
+      el.addEventListener('mouseenter',()=>{ cursor.classList.add('hover'); ring.classList.add('hover'); });
+      el.addEventListener('mouseleave',()=>{ cursor.classList.remove('hover'); ring.classList.remove('hover'); });
+    });
+  }
+
+  // HAMBURGER MENU
+  const hamburger  = document.getElementById('navHamburger');
+  const navMobile  = document.getElementById('navMobile');
+  function closeMobileNav() {
+    hamburger.classList.remove('open');
+    navMobile.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  hamburger.addEventListener('click', () => {
+    const isOpen = hamburger.classList.toggle('open');
+    navMobile.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
   });
 
   // NAV shrink on scroll
